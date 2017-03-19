@@ -18,6 +18,8 @@
 [cdnjs_img]: https://img.shields.io/cdnjs/v/pdfmake.svg?colorB=0E7FBF
 [cndjs_url]: https://cdnjs.com/libraries/pdfmake
 
+Credit to NilsDannemann/meteor-pdfmake
+- Created original code this is just a more up to date version
 
 Client/server side PDF printing in pure JavaScript
 
