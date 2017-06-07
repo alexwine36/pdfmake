@@ -23,7 +23,7 @@ Credit to NilsDannemann/meteor-pdfmake
 
 Client/server side PDF printing in pure JavaScript
 
-Check out [the playground](http://bpampuch.github.io/pdfmake/playground.html)
+Check out [the playground](http://bpampuch.github.io/pdfmake/playground.html) and [examples](https://github.com/bpampuch/pdfmake/tree/master/examples).
 
 ### Features
 
@@ -31,22 +31,23 @@ Check out [the playground](http://bpampuch.github.io/pdfmake/playground.html)
 * text-alignments (left, right, centered, justified),
 * numbered and bulleted lists,
 * tables and columns
- * auto/fixed/star-sized widths,
- * col-spans and row-spans,
- * headers automatically repeated in case of a page-break,
+  * auto/fixed/star-sized widths,
+  * col-spans and row-spans,
+  * headers automatically repeated in case of a page-break,
 * images and vector graphics,
 * convenient styling and style inheritance,
 * page headers and footers:
- * static or dynamic content,
- * access to current page number and page count,
-* background-layer
+  * static or dynamic content,
+  * access to current page number and page count,
+* background-layer,
 * page dimensions and orientations,
 * margins,
 * custom page breaks,
 * font embedding,
 * support for complex, multi-level (nested) structures,
-* helper methods for opening/printing/downloading the generated PDF.
-* setting of PDF metadata (e.g. author, subject)
+* table of contents,
+* helper methods for opening/printing/downloading the generated PDF,
+* setting of PDF metadata (e.g. author, subject).
 
 ## Getting Started
 
@@ -82,6 +83,10 @@ bower install pdfmake
 
 or copy them directly from the build directory from the repository. Otherwise you can always [build it from sources](#building-from-sources).
 
+### Supported browsers
+
+See [issue](https://github.com/bpampuch/pdfmake/issues/800).
+
 ### Document-definition-object
 
 pdfmake follows a declarative approach. It basically means, you'll never have to calculate positions manually or use commands like: ```writeText(text, x, y)```, ```moveDown``` etc..., as you would with a lot of other libraries.
@@ -94,19 +99,69 @@ var docDefinition = { content: 'This is an sample PDF printed with pdfMake' };
 
 or become pretty complex (having multi-level tables, images, lists, paragraphs, margins, styles etc...).
 
-As soon as you have the document-definition-object, you're ready to create and open/print/download the PDF:
-
+As soon as you have the document-definition-object, you're ready to create and download/open/print the PDF:
 ```js
-// open the PDF in a new window
-pdfMake.createPdf(docDefinition).open();
-
-// print the PDF
-pdfMake.createPdf(docDefinition).print();
-
-// download the PDF
 pdfMake.createPdf(docDefinition).download();
 
-// put the PDF into your own page as URL data
+pdfMake.createPdf(docDefinition).open();
+
+pdfMake.createPdf(docDefinition).print();
+```
+Details in the next chapters.
+
+#### Download the PDF
+```js
+pdfMake.createPdf(docDefinition).download();
+```
+Parameters:
+* `defaultFileName` _(optional)_ - file name
+* `cb` _(optional)_ - callback function
+* `options` _(optional)_
+
+#### Open the PDF in a new window
+```js
+pdfMake.createPdf(docDefinition).open();
+```
+Parameters:
+* `options` _(optional)_
+* `win` _(optional)_ - window (when an asynchronous operation)
+
+Name can be defined only by using metadata `title` property (see [Document metadata](#document-metadata)).
+
+Asynchronous example:
+```js
+$scope.generatePdf = function() {
+  // create the window before the callback
+  var win = window.open('', '_blank');
+  $http.post('/someUrl', data).then(function(response) {
+    // pass the "win" argument
+    pdfMake.createPdf(docDefinition).open({}, win);
+  });
+};
+```
+
+#### Print the PDF
+```js
+pdfMake.createPdf(docDefinition).print();
+```
+Parameters:
+* `options` _(optional)_
+* `win` _(optional)_ - window (when an asynchronous operation)
+
+Asynchronous example:
+```js
+$scope.generatePdf = function() {
+  // create the window before the callback
+  var win = window.open('', '_blank');
+  $http.post('/someUrl', data).then(function(response) {
+    // pass the "win" argument
+    pdfMake.createPdf(docDefinition).print({}, win);
+  });
+};
+```
+
+#### Put the PDF into your own page as URL data
+```js
 const pdfDocGenerator = pdfMake.createPdf(docDefinition);
 pdfDocGenerator.getDataUrl((dataUrl) => {
 	const targetElement = document.querySelector('#iframeContainer');
@@ -114,19 +169,36 @@ pdfDocGenerator.getDataUrl((dataUrl) => {
 	iframe.src = dataUrl;
 	targetElement.appendChild(iframe);
 });
+```
+Parameters:
+* `cb` - callback function
+* `options` _(optional)_
 
-// get the PDF as base64 data
+#### Get the PDF as base64 data
+```js
 const pdfDocGenerator = pdfMake.createPdf(docDefinition);
 pdfDocGenerator.getBase64((data) => {
 	alert(data);
 });
+```
+Parameters:
+* `cb` - callback function
+* `options` _(optional)_
 
-// or get the PDF as buffer
+#### Get the PDF as buffer
+```js
 const pdfDocGenerator = pdfMake.createPdf(docDefinition);
 pdfDocGenerator.getBuffer((buffer) => {
 	// ...
 });
 ```
+Parameters:
+* `cb` - callback function
+* `options` _(optional)_
+
+#### Server side
+
+see [examples](https://github.com/bpampuch/pdfmake/tree/master/examples) and [dev-playground server script](https://github.com/bpampuch/pdfmake/blob/master/dev-playground/server.js)
 
 #### Styling
 pdfmake makes it possible to style any paragraph or its part:
@@ -492,6 +564,35 @@ var docDefinition = {
 };
 ```
 
+#### Links
+
+To add external or internal links, use the following syntax:
+```
+{text: 'google', link: 'http://google.com'}
+{text:'Go to page 2', linkToPage: 2}
+```
+
+#### Table of contents
+
+```js
+var docDefinition = {
+  content: [
+    {
+      toc: {
+        // id: 'mainToc'  // optional
+        title: {text: 'INDEX', style: 'header'}
+      }
+    },
+    {
+      text: 'This is a header',
+      style: 'header',
+      tocItem: true, // or tocItem: 'mainToc' if is used id in toc
+      // or tocItem: ['mainToc', 'subToc'] for multiple tocs
+    }
+  ]
+}
+```
+
 
 #### Page dimensions, orientation and margins
 
@@ -532,7 +633,6 @@ To change page orientation within a document, add a page break with the new page
 
 #### Document Metadata
 
-(From PdfKit Guide)
 PDF documents can have various metadata associated with them, such as the title, or author
 of the document. You can add that information by adding it to the document definition
 
@@ -547,6 +647,22 @@ var docDefinition = {
   content:  'This is an sample PDF printed with pdfMake'
 }
 ```
+
+Standard properties:
+* **title** - the title of the document
+* **author** - the name of the author
+* **subject** - the subject of the document
+* **keywords** - keywords associated with the document
+* **creator** - the creator of the document (default is 'pdfmake')
+* **producer** - the producer of the document (default is 'pdfmake')
+* **creationDate** - the date the document was created (added automatically by pdfmake)
+* **modDate** - the date the document was last modified
+* **trapped** - the trapped flag in a PDF document indicates whether the document has been "trapped"
+
+Custom properties:
+
+You can add custom properties. Key of property not contain spaces.
+
 
 #### Compression
 
@@ -584,8 +700,10 @@ There's one thing on the roadmap for v2 (no deadline however) - make the library
 ## License
 MIT
 
--------
+## Authors
+* [@bpampuch](https://github.com/bpampuch) (founder)
+* [@liborm85](https://github.com/liborm85)
 
-pdfmake is based on a truly amazing library pdfkit.org - credits to @devongovett
+pdfmake is based on a truly amazing library [pdfkit](https://github.com/devongovett/pdfkit) (credits to [@devongovett](https://github.com/devongovett)).
 
-big thanks to @yelouafi for making this library even better
+Thanks to all contributors.
