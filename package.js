@@ -2,7 +2,7 @@ Package.describe({
 	name: "alexwine:pdfmake",
 	summary: "Let's you generate PDF's on the client and provides handy features for Layout & Styling.",
 	author: "Alex Wine <alexwine@awts.io>",
-	version: "0.1.26_7",
+	version: "0.1.26_8",
 	documentation: 'readme.md',
 	git: "https://github.com/alexwine36/pdfmake.git"
 });
